@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>안양 공룡 게임</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+            background-color: #70c5ce; /* 배경색 추가 */
+        }
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="score">Score: 0</div>
+        <canvas id="gameCanvas" width="800" height="300"></canvas>
+    </div>
+
+    <script>
+        // Setup canvas
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameContainer = document.getElementById('gameContainer');
+
+        // Dino variables
+        let dino = { x: 50, y: 250, width: 20, height: 20, dy: 0, gravity: 0.8 };
+        let isJumping = false;
+
+        // Cactus variables
+        let cactus = { x: 800, y: 250, width: 20, height: 20 };
+
+        // Score
+        let score = 0;
+
+        // Key event listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                if (!isJumping) {
+                    dino.dy = -12;
+                    isJumping = true;
+                }
+                changeBackground();
+            }
+        });
+
+        // Background images
+        const backgrounds = [
+            'https://upload.wikimedia.org/wikipedia/commons/f/f0/Anyang_city.jpg',
+            'https://upload.wikimedia.org/wikipedia/commons/b/bc/Flag_of_Anyang.svg',
+            'https://i.namu.wiki/i/-w7kjMfrEp9zisI7DRGIw69wV_23vJ42iANTFttRgC604ahLebQngqy0cifZKm5t_gGvVT6P6PPWMzDNBMXdUrFQh2Kokcpecbnx721qvXwcMm6MX4d186BO6dESIaem9AN2kjZCXx8zzUIFgoW2tw.webp',
+            'https://i.namu.wiki/i/J5hG1-Ly3uFUNf2_1FmkAl8sDaxwuazlZXTNEfc6FnH7ICR6GMlmZ95ycToo4q_zM4h88X1IEm9zeZ5lV_hieuPClo5ZWEvDoHw_RaRbj3dBQKkz5jSgCyWnVXytzvRLneM87J3t8z6AbSSHqTIgGg.webp',
+            'https://i.namu.wiki/i/bbQlIYWjIGpB4oQvmh8-xi969VyLBc6Bv5U9sXxIs6hkV-A3B1WgUszgXnKQcxbwEJfWia1SR90VDmVo1MCQhBhY7gK4GhcUTob6tBXcKj3Ipf0J0TGT4MPNmsGvrP13-Jy_rxKDzgMl6prjaBhH4g.webp',
+            'https://i.namu.wiki/i/2OFAt1gBAQ7aQbnbTcgQMnZ8XL_ikuCwQwgIae3Y8AB0lYTxO2DdBPWlTWjoDvEB3xUV_LxlcfJdEJeW_WVxiw-peZHF4QPg-sQh5bKoA4nAxtddh7qnTVjefVr1w-0C5szObKcOz5tKHyhXu00CJA.svg',
+            'https://upload.wikimedia.org/wikipedia/commons/e/e1/2014%EB%85%84_12%EC%9B%94_20%EC%9D%BC_%EC%95%88%EC%96%91%EB%8C%80%ED%95%99%EA%B5%9027.jpg',
+            'https://upload.wikimedia.org/wikipedia/commons/0/02/2014%EB%85%84_11%EC%9B%94_29%EC%9D%BC_%EA%B2%BD%EA%B8%B0%EB%8F%84_%EC%95%88%EC%96%91%EC%8B%9C_%EC%9E%A5%EB%82%B4%EB%A1%9C100%EB%B2%88%EA%B8%B8.jpg'
+        ];
+        let currentBackgroundIndex = 0;
+
+        function changeBackground() {
+            gameContainer.style.backgroundImage = `url(${backgrounds[currentBackgroundIndex]})`;
+            currentBackgroundIndex = (currentBackgroundIndex + 1) % backgrounds.length;
+        }
+
+        // Game loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Dino physics
+            dino.y += dino.dy;
+            dino.dy += dino.gravity;
+            if (dino.y > 250) {
+                dino.y = 250;
+                dino.dy = 0;
+                isJumping = false;
+            }
+
+            // Draw dino
+            ctx.fillStyle = 'black';
+            ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
+
+            // Cactus movement
+            cactus.x -= 5;
+            if (cactus.x < -cactus.width) {
+                cactus.x = canvas.width;
+                score++;
+                document.getElementById('score').innerText = 'Score: ' + score;
+            }
+
+            // Draw cactus
+            ctx.fillStyle = 'green';
+            ctx.fillRect(cactus.x, cactus.y, cactus.width, cactus.height);
+
+            // Collision detection
+            if (
+                dino.x < cactus.x + cactus.width &&
+                dino.x + dino.width > cactus.x &&
+                dino.y < cactus.y + cactus.height &&
+                dino.y + dino.height > cactus.y
+            ) {
+                gameOver();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Game over function
+        function gameOver() {
+            alert('Game Over! Your score: ' + score);
+            window.location.href = 'https://www.anyang.go.kr/tour/index.do';
+        }
+
+        // Start game
+        changeBackground();
+        gameLoop();
+    </script>
+</body>
+</html>
